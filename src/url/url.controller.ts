@@ -1,7 +1,6 @@
+import { ICreateUrlDto, UrlService } from './url.service';
 import fastify, { FastifyRequest } from "fastify";
 import { is, object, string } from "superstruct";
-
-import { UrlService } from './url.service';
 
 export function urlController(app: ReturnType<typeof fastify>) {
   app.get("/health", async () => {
@@ -16,13 +15,12 @@ export function urlController(app: ReturnType<typeof fastify>) {
       const url = await urlService.getUrl(id);
 
       if (!url) {
-        reply
+        return reply
           .code(404)
           .header("Content-Type", "application/json; charset=utf-8")
           .send({
             message: "Not found",
           });
-        return;
       }
 
       reply.redirect(url);
@@ -30,8 +28,9 @@ export function urlController(app: ReturnType<typeof fastify>) {
   );
 
   app.post("/url", async (request, reply) => {
-    if (!is(request.body, object({url: string()}))) {
-      reply
+    const { body } = request;
+    if (!isUrl(body)) {
+      return reply
         .code(400)
         .header("Content-Type", "application/json; charset=utf-8")
         .send({
@@ -40,6 +39,10 @@ export function urlController(app: ReturnType<typeof fastify>) {
     }
 
     const urlService = request.diScope.resolve<UrlService>('urlService');
-    return urlService.createUrl(request.body);
+    return urlService.createUrl(body);
   });
+
+  function isUrl(data: unknown): data is ICreateUrlDto {
+    return is(data, object({url: string()}));
+  }
 }

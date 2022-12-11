@@ -1,5 +1,6 @@
 import {Lifetime, asFunction} from "awilix";
 
+import {UrlSchema} from "./url/url.schema";
 import {UrlService} from "./url/url.service";
 import {createClient} from "redis";
 import {createConnection} from "mongoose";
@@ -18,17 +19,18 @@ export function registerContainer(app: ReturnType<typeof fastify>) {
         client.connect();
         return client;
       },
-      { lifetime: Lifetime.SINGLETON }
+      {lifetime: Lifetime.SINGLETON}
     ),
+    urlModel: asFunction(({db}) => db.model("Url", UrlSchema)),
   });
 
   app.addHook("onRequest", (request, reply, done) => {
     request.diScope.register({
       urlService: asFunction(
-        ({db, cache}) => {
-          return new UrlService(db, cache);
+        ({urlModel, cache}) => {
+          return new UrlService(urlModel, cache);
         },
-        { lifetime: Lifetime.SCOPED }
+        {lifetime: Lifetime.SCOPED}
       ),
     });
     done();

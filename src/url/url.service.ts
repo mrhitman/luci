@@ -1,25 +1,20 @@
-import { Connection, Model } from "mongoose";
-
-import { UrlSchema } from './url.schema';
+import { IUrl } from './url.schema';
+import { Model } from "mongoose";
 import { createClient } from "redis";
 
-export interface IUrl {
-  _id: string;
+type CachedUrl = Partial<IUrl> & Pick<IUrl, "url">;
+
+export interface ICreateUrlDto {
   url: string;
-  createdAt: string;
 }
 
 export class UrlService {
-  private model: Model<any>;
-
   constructor(
-    db: Connection,
+    private readonly model: Model<IUrl>,
     private readonly cache: ReturnType<typeof createClient>
-  ) {
-    this.model = db.model("Url", UrlSchema);
-  }
+  ) {}
 
-  async createUrl(body: unknown): Promise<string> {
+  async createUrl(body: ICreateUrlDto): Promise<string> {
     const model = new this.model(body);
     await model.save();
     return model._id;
@@ -47,7 +42,7 @@ export class UrlService {
 
   private async getFromCache(
     id: string
-  ): Promise<null | (Partial<IUrl> & Pick<IUrl, "url">)> {
+  ): Promise<null | CachedUrl> {
     const results = await this.cache.get(`tiny:${id}`);
     return results ? { url: results } : null;
   }

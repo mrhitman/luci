@@ -10,7 +10,6 @@ async function run() {
     target: "es2022",
     platform: "node",
     outdir: "dist",
-    watch: true,
   });
 }
 
