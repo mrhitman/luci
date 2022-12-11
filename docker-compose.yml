@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  # luci:
+  #   build: .
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     - PORT=3000
+  #     - DB_CONNECTION=mongodb://db:27017/luci
+  #   depends_on:
+  #     - db
+  #     - cache
+
+  db:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=luci
+
+  cache:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
