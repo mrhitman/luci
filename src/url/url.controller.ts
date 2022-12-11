@@ -1,8 +1,7 @@
-import fastify, {FastifyRequest} from "fastify";
-import {is, object, string} from "superstruct";
+import fastify, { FastifyRequest } from "fastify";
+import { is, object, string } from "superstruct";
 
-import {Connection} from "mongoose";
-import {UrlSchema} from "./url.schema";
+import { UrlService } from './url.service';
 
 export function urlController(app: ReturnType<typeof fastify>) {
   app.get("/health", async () => {
@@ -12,13 +11,11 @@ export function urlController(app: ReturnType<typeof fastify>) {
   app.get(
     "/:id",
     async (request: FastifyRequest<{Params: {id: string}}>, reply) => {
-      const db = app.diContainer.resolve<Connection>("db");
-      const UrlModel = db.model("Url", UrlSchema);
-
       const {id} = request.params;
-      const model = await UrlModel.findById(id);
+      const urlService = request.diScope.resolve<UrlService>('urlService');
+      const url = await urlService.getUrl(id);
 
-      if (!model) {
+      if (!url) {
         reply
           .code(404)
           .header("Content-Type", "application/json; charset=utf-8")
@@ -28,7 +25,7 @@ export function urlController(app: ReturnType<typeof fastify>) {
         return;
       }
 
-      reply.redirect(model.url);
+      reply.redirect(url);
     }
   );
 
@@ -42,11 +39,7 @@ export function urlController(app: ReturnType<typeof fastify>) {
         });
     }
 
-    const db = app.diContainer.resolve<Connection>("db");
-    const UrlModel = db.model("Url", UrlSchema);
-
-    const model = new UrlModel(request.body);
-    await model.save();
-    return model._id;
+    const urlService = request.diScope.resolve<UrlService>('urlService');
+    return urlService.createUrl(request.body);
   });
 }
