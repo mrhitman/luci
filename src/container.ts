@@ -9,13 +9,13 @@ import fastify from "fastify";
 
 export function registerContainer(app: ReturnType<typeof fastify>) {
   diContainer.register({
-    db: asFunction(() => createConnection(process.env.DB_CONNECTION!), {
+    db: asFunction(() => createConnection(process.env.DB_URL!), {
       lifetime: Lifetime.SINGLETON,
       dispose: (module) => module.close(),
     }),
     cache: asFunction(
       () => {
-        const client = createClient({url: "redis://127.0.0.1:6379"});
+        const client = createClient({url: process.env.REDIS_URL! });
         client.connect();
         return client;
       },
@@ -27,10 +27,8 @@ export function registerContainer(app: ReturnType<typeof fastify>) {
   app.addHook("onRequest", (request, reply, done) => {
     request.diScope.register({
       urlService: asFunction(
-        ({urlModel, cache}) => {
-          return new UrlService(urlModel, cache);
-        },
-        {lifetime: Lifetime.SCOPED}
+        ({urlModel, cache}) => new UrlService(urlModel, cache),
+        {lifetime: Lifetime.SINGLETON}
       ),
     });
     done();
