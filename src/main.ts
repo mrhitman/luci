@@ -1,25 +1,25 @@
-import { config } from "dotenv";
+import { diContainer, fastifyAwilixPlugin } from "@fastify/awilix";
+
+import { ConfigService } from './common/config.service';
 import fastify from "fastify";
-import { fastifyAwilixPlugin } from "@fastify/awilix";
-import { registerContainer } from './container';
+import { indexController } from './common/index.controller';
+import { registerContainer } from './common/app.container';
 import { urlController } from "./url/url.controller";
 
-function bootstrap() {
-  config();
-
-  const port = Number(process.env.PORT ?? 8080);
+async function bootstrap() {
   const app = fastify({
     logger: true,
   });
-  debugger;
   app.register(fastifyAwilixPlugin, {
     disposeOnClose: true,
     disposeOnResponse: true,
   });
-  registerContainer(app);
+  await registerContainer(app);
+  indexController(app);
   urlController(app);
+  const config = await diContainer.resolve<ConfigService>('config');
 
-  app.listen({port}, (err, address) => {
+  app.listen({port: config.port}, (err, address) => {
     if (err) {
       console.error(err);
       process.exit(1);

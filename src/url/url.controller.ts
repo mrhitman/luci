@@ -3,10 +3,6 @@ import fastify, { FastifyRequest } from "fastify";
 import { is, object, string } from "superstruct";
 
 export function urlController(app: ReturnType<typeof fastify>) {
-  app.get("/health", async () => {
-    return "welcome to shorturl microservice";
-  });
-
   app.get(
     "/:id",
     async (request: FastifyRequest<{Params: {id: string}}>, reply) => {

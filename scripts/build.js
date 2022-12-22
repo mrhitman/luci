@@ -1,5 +1,5 @@
-const {build} = require("esbuild")
-const fg = require("fast-glob")
+const { build } = require("esbuild");
+const fg = require("fast-glob");
 
 async function run() {
   const entryPoints = await fg(["src/**/*.ts"]);
@@ -9,7 +9,9 @@ async function run() {
     format: "cjs",
     target: "es2022",
     platform: "node",
+    tsconfig: "./tsconfig.json",
     outdir: "dist",
+    watch: Boolean(process.env.WATCH ?? 0),
   });
 }
 
