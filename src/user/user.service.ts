@@ -6,7 +6,10 @@ export class UserService {
     private readonly model: Model<IUser>,
   ) {}
 
-  private async getFromDb(id: string): Promise<null | IUser> {
+  async createUser() {
+  }
+
+  async getUser(id: string): Promise<null | IUser> {
     const results = await this.model.findById(id);
     return results ?? null;
   }
