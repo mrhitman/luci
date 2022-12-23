@@ -7,8 +7,8 @@ type FastifyOAuthInstance = FastifyInstance & { googleOAuth2: OAuth2Namespace };
 
 export function indexController(app: ReturnType<typeof fastify>) {
   app.get("/", async (request, reply) => {
-    const session = request.session.get('data');
-    return reply.view("login.ejs", { isLogined: !!session });
+    // const session = request.session.get('data');
+    return reply.view("create-url.ejs");
   });
 
   app.get("/auth/google/callback", async function (request, reply) {
