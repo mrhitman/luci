@@ -4,6 +4,7 @@ import base62random from "base62-random";
 export interface IUrl extends Document {
   _id: string;
   url: string;
+  usageLeft: number;
   user_id: string;
   createdAt: string;
 }
@@ -21,6 +22,9 @@ export const UrlSchema = new Schema({
     type: String,
     trim: true,
     required: true,
+  },
+  usageLeft: {
+    type: Number,
   },
   createdAt: {
     type: Date,

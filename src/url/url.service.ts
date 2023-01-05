@@ -1,11 +1,24 @@
 import { IUrl } from './url.schema';
 import { Model } from "mongoose";
 import { createClient } from "redis";
+import fastJson from 'fast-json-stringify';
 
 type CachedUrl = Partial<IUrl> & Pick<IUrl, "url">;
+const stringify = fastJson({
+  type: 'object',
+  properties: {
+    url: {
+      type: 'string',
+    },
+    maxUsages: {
+      type: 'integer',
+    },
+  }
+});
 
 export interface ICreateUrlDto {
   url: string;
+  maxUsages?: number;
 }
 
 export class UrlService {
@@ -23,6 +36,11 @@ export class UrlService {
   async getUrl(id: string): Promise<null | string> {
     const cached = await this.getFromCache(id);
     if (cached) {
+      if (this.isLimitedUsageUrl(cached)) {
+        this.vanishUrl(cached);
+        return null;
+      }
+
       return cached.url;
     }
 
@@ -31,7 +49,12 @@ export class UrlService {
       return null;
     }
 
-    this.cache.set(id, results.url, {EX: 300 });
+    if (this.isLimitedUsageUrl(results)) {
+      this.vanishUrl(results);
+      return null;
+    }
+
+    this.cache.set(id, stringify(results), { EX: 300 });
     return results.url;
   }
 
@@ -44,6 +67,15 @@ export class UrlService {
     id: string
   ): Promise<null | CachedUrl> {
     const results = await this.cache.get(`tiny:${id}`);
-    return results ? { url: results } : null;
+    return results ? JSON.parse(results) : null;
+  }
+  
+  private async vanishUrl(url: CachedUrl | IUrl): Promise<void> {
+    this.cache.set(`tiny:${url._id}`, '', {EX: 0});
+    this.model.deleteOne({ _id: url._id });
+  }
+
+  private isLimitedUsageUrl(url: CachedUrl | IUrl): boolean {
+    return Boolean(url?.usageLeft && url.usageLeft <= 0);
   }
 }
